@@ -16,6 +16,16 @@ app.listen(8000, () => {
   console.log('Server started');
 });
 
+// --- Self-Ping to Keep Alive ---
+const axios = require('axios');
+const SELF_URL = 'https://dashboard.render.com/web/srv-d3phljt6ubrc73f63v8g/deploys/dep-d3phpejipnbc739u60o0?r=2025-10-18%4004%3A50%3A07~2025-10-18%4004%3A54%3A43'; // Replace with your Render URL
+
+setInterval(() => {
+  axios.get(SELF_URL)
+    .then(() => console.log(`[SelfPing] Pinged ${SELF_URL}`))
+    .catch(err => console.log(`[SelfPing] Failed: ${err.message}`));
+}, 5 * 60 * 1000); // every 5 minutes
+
 function createBot() {
    const bot = mineflayer.createBot({
       username: config['bot-account']['username'],
@@ -40,6 +50,31 @@ function createBot() {
 
          bot.once('chat', (username, message) => {
             console.log(`[ChatLog] <${username}> ${message}`); // Log all chat messages
+
+           // --- Anti-Idle Movement ---
+if (config.utils['anti-afk'].enabled) {
+  console.log('[INFO] Anti-idle protection activated.');
+
+  setInterval(() => {
+    const actions = ['jump', 'swingArm', 'look'];
+    const action = actions[Math.floor(Math.random() * actions.length)];
+
+    switch (action) {
+      case 'jump':
+        bot.setControlState('jump', true);
+        setTimeout(() => bot.setControlState('jump', false), 300);
+        break;
+      case 'swingArm':
+        bot.swingArm();
+        break;
+      case 'look':
+        bot.look(Math.random() * Math.PI * 2, 0);
+        break;
+    }
+
+    console.log(`[AntiIdle] Performed ${action}`);
+  }, 60 * 1000); // every 60 seconds
+}
 
             // Check for various possible responses
             if (message.includes('successfully registered')) {
